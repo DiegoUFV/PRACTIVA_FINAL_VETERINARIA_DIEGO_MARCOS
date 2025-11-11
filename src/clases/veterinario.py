@@ -1,14 +1,11 @@
-class AñadirNotaConsulta:
+class RegistrarVeterinario:
     pass
 
-class RegistrarTratamiento:
+class ListarVeterinarios:
     pass
 
-class RegistrarVacunacion:
+class AsignarVeterinario:
     pass
 
-class HistorialClinicoCompleto:
-    pass
-
-class AdjuntarArchivos:
+class ConsultarHistorialVeterinario:
     pass
