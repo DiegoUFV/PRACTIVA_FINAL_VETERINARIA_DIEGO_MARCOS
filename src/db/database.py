@@ -87,6 +87,36 @@ class Database:
             """
         )
         
+        # Tabla de facturas
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS invoices (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                client_id INTEGER NOT NULL,
+                pet_id INTEGER NOT NULL,
+                appointment_id INTEGER NOT NULL,
+                created_at TEXT NOT NULL,
+                status TEXT NOT NULL,
+                FOREIGN KEY(client_id) REFERENCES clients(id),
+                FOREIGN KEY(pet_id) REFERENCES pets(id),
+                FOREIGN KEY(appointment_id) REFERENCES appointments(id)
+            )
+            """
+        )
+
+        # Tabla de líneas de factura
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS invoice_lines (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                invoice_id INTEGER NOT NULL,
+                description TEXT NOT NULL,
+                quantity REAL NOT NULL,
+                unit_price REAL NOT NULL,
+                FOREIGN KEY(invoice_id) REFERENCES invoices(id)
+            )
+            """
+        )
 
         conn.commit()
         conn.close()
