@@ -15,12 +15,18 @@ client_service = ClientService(db)
 pet_service = PetService(db)
 
 # ======================================================
-# TABS (sin listado) — en el orden que tú quieres
+# TABS 
 # ======================================================
-tabs = st.tabs(["➕ Registrar mascota", "📝 Ficha completa", "⚙️ Editar / Eliminar"])
+tabs = st.tabs([
+    "➕ Registrar mascota",
+    "📋 Listado por cliente",
+    "📝 Ficha completa",
+    "⚙️ Editar / Eliminar"
+])
+
 
 # ======================================================
-# TAB 1 — REGISTRAR MASCOTA (lo primero que querías)
+# TAB 1 — REGISTRAR MASCOTA 
 # ======================================================
 with tabs[0]:
     st.subheader("➕ Registrar nueva mascota")
@@ -45,11 +51,83 @@ with tabs[0]:
                 pet_service.create_pet(owner_id, name, species, breed or None, sex or None)
                 st.success("Mascota registrada correctamente.")
 
+# ======================================================
+# ⭐ TAB 2 — LISTADO DE MASCOTAS POR CLIENTE (AÑADIDO)
+# ======================================================
+with tabs[1]:
+    st.subheader("📋 Listado de mascotas por cliente")
+
+    search_mode = st.radio("Buscar cliente por:", ["ID", "Nombre"], horizontal=True)
+
+    client = None
+
+    # Buscar por ID
+    if search_mode == "ID":
+        client_id_search = st.number_input("ID del cliente", min_value=1, step=1)
+        if st.button("Buscar por ID", key="buscar_por_id_mascotas"):
+            client = client_service.get_client_by_id(client_id_search)
+            if not client:
+                st.error("No existe un cliente con ese ID.")
+
+    # Buscar por nombre
+    else:
+        name_query = st.text_input("Nombre del cliente")
+        if st.button("Buscar por nombre", key="buscar_por_nombre_mascotas"):
+            results = client_service.find_by_name(name_query)
+
+            if not results:
+                st.warning("No se encontró ningún cliente con ese nombre.")
+            elif len(results) == 1:
+                client = results[0]
+            else:
+                st.info("Se encontraron varios clientes, selecciona uno:")
+                client = st.selectbox(
+                    "Seleccionar cliente",
+                    results,
+                    format_func=lambda c: f"{c[1]} (ID {c[0]})",
+                    key="selector_clientes_mascotas"
+                )
+
+    # Mostrar mascotas del cliente
+    if client:
+        st.success(f"Cliente encontrado: {client[1]} (ID {client[0]})")
+
+        pets = pet_service.list_pets_by_client(client[0])
+
+        if not pets:
+            st.info("Este cliente no tiene mascotas registradas.")
+        else:
+            st.subheader("Mascotas del cliente:")
+
+            for p in pets:
+                pet_id, name, species, breed, sex = p
+
+                st.markdown(
+                    f"""
+                    <div style='
+                        background-color:#111;
+                        padding:15px;
+                        border-radius:10px;
+                        border:1px solid #444;
+                        margin-bottom:12px;
+                    '>
+                        <h4 style='margin:0;color:white;'>{name}</h4>
+                        <p style='margin:2px;color:#bbb;'>
+                            <b>ID:</b> {pet_id}<br>
+                            <b>Especie:</b> {species}<br>
+                            <b>Raza:</b> {breed if breed else "No especificada"}<br>
+                            <b>Sexo:</b> {sex if sex else "No especificado"}
+                        </p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
 
 # ======================================================
 # TAB 2 — FICHA COMPLETA (buscar por ID)
 # ======================================================
-with tabs[1]:
+with tabs[2]:
     st.subheader("📝 Ficha completa de mascota")
 
     pet_id = st.number_input("ID de mascota", min_value=1, step=1)
@@ -72,7 +150,7 @@ with tabs[1]:
 # ======================================================-
 # TAB 3 — EDITAR O ELIMINAR
 # ======================================================
-with tabs[2]:
+with tabs[3]:
     st.subheader("⚙️ Editar o eliminar mascota")
 
     pet_id_edit = st.number_input("ID de la mascota", min_value=1, step=1, key="edit_pet")
