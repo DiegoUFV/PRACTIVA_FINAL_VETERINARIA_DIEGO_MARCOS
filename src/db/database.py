@@ -73,6 +73,20 @@ class Database:
             )
             """
         )
+                    # Tabla sencilla de historia clínica
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS medical_records (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                pet_id INTEGER NOT NULL,
+                record_date TEXT NOT NULL,
+                record_type TEXT NOT NULL,
+                description TEXT NOT NULL,
+                FOREIGN KEY (pet_id) REFERENCES pets(id)
+            )
+            """
+        )
+        
 
         conn.commit()
         conn.close()
