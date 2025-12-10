@@ -147,46 +147,65 @@ with tabs[2]:
             st.write(f"**Sexo:** {pet[5]}")
 
 
-# ======================================================-
-# TAB 3 — EDITAR O ELIMINAR
+
+# ======================================================
+# TAB 4 — EDITAR O ELIMINAR
 # ======================================================
 with tabs[3]:
     st.subheader("⚙️ Editar o eliminar mascota")
 
-    pet_id_edit = st.number_input("ID de la mascota", min_value=1, step=1, key="edit_pet")
+    # Entrada de ID
+    pet_id_edit = st.number_input("ID de la mascota", min_value=1, step=1, key="edit_pet_id")
 
-    if st.button("Cargar datos"):
+    # Botón para cargar datos
+    if st.button("Cargar datos", key="cargar_mascota_btn"):
         pet = pet_service.get_pet_by_id(pet_id_edit)
 
         if not pet:
             st.error("Mascota no encontrada.")
+            st.session_state["pet_loaded"] = None
         else:
             st.success("Mascota cargada")
+            st.session_state["pet_loaded"] = pet   # ✔ Guardamos en sesión
 
-            # USAMOS FORMULARIO PARA EVITAR RESETEOS
-            with st.form("editar_mascota_form"):
-                name_edit = st.text_input("Nombre", value=pet[2])
-                species_edit = st.text_input("Especie", value=pet[3])
-                breed_edit = st.text_input("Raza", value=pet[4])
-                sex_edit = st.selectbox(
-                    "Sexo", 
-                    ["Macho", "Hembra"], 
-                    index=0 if pet[5] == "Macho" else 1
+    # Recuperar mascota cargada
+    pet_loaded = st.session_state.get("pet_loaded", None)
+
+    # Si hay mascota cargada → mostrar formulario
+    if pet_loaded:
+        pet_id, owner_id, name, species, breed, sex = pet_loaded
+
+        with st.form("editar_mascota_form"):
+            name_edit = st.text_input("Nombre", value=name)
+            species_edit = st.text_input("Especie", value=species)
+            breed_edit = st.text_input("Raza", value=breed)
+            sex_edit = st.selectbox(
+                "Sexo",
+                ["Macho", "Hembra"],
+                index=0 if sex == "Macho" else 1
+            )
+
+            guardar = st.form_submit_button("Guardar cambios")
+            borrar = st.form_submit_button("Eliminar mascota")
+
+            # GUARDAR CAMBIOS
+            if guardar:
+                pet_service.update_pet(
+                    pet_id,
+                    name_edit,
+                    species_edit,
+                    breed_edit,
+                    sex_edit
                 )
+                st.success("Mascota actualizada correctamente.")
 
-                guardar = st.form_submit_button("Guardar cambios")
-                borrar = st.form_submit_button("Eliminar mascota")
+                # Recargar datos actualizados
+                st.session_state["pet_loaded"] = pet_service.get_pet_by_id(pet_id)
 
-                if guardar:
-                    pet_service.update_pet(
-                        pet_id_edit,
-                        name_edit,
-                        species_edit,
-                        breed_edit,
-                        sex_edit
-                    )
-                    st.success("Mascota actualizada correctamente.")
-
-                if borrar:
-                    pet_service.delete_pet(pet_id_edit)
-                    st.warning("Mascota eliminada.")
+            # ELIMINAR
+            if borrar:
+                pet_service.delete_pet(pet_id)
+                st.warning("Mascota eliminada.")
+                
+                # Borramos datos cargados
+                st.session_state["pet_loaded"] = None
