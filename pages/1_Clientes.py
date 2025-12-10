@@ -124,32 +124,47 @@ with tabs[2]:
 with tabs[3]:
     st.subheader("⚙️ Editar o eliminar cliente")
 
-    client_id_edit = st.number_input("ID del cliente", min_value=1, step=1)
+    # INPUT PARA BUSCAR
+    client_id_edit = st.number_input("ID del cliente", min_value=1, step=1, key="client_id_edit")
 
     if st.button("Cargar datos"):
         client = client_service.get_client_by_id(client_id_edit)
 
         if not client:
             st.error("Cliente no encontrado.")
+            st.session_state["client_loaded"] = None
         else:
             st.success("Cliente encontrado")
+            # Guardamos en session_state para no perderlo
+            st.session_state["client_loaded"] = client
 
-            name_edit = client[1]
-            email_edit = client[2]
-            phone_edit = client[3]
+    # SI HAY CLIENTE CARGADO, MOSTRAR FORMULARIO
+    client_loaded = st.session_state.get("client_loaded", None)
 
-            with st.form("form_editar_cliente"):
-                new_name = st.text_input("Nombre", value=name_edit)
-                new_email = st.text_input("Correo electrónico", value=email_edit)
-                new_phone = st.text_input("Teléfono", value=phone_edit)
+    if client_loaded:
+        client_id, name, email, phone = client_loaded
 
-                guardar = st.form_submit_button("Guardar cambios")
-                borrar = st.form_submit_button("Eliminar cliente")
+        with st.form("form_editar_cliente"):
+            new_name = st.text_input("Nombre", value=name)
+            new_email = st.text_input("Correo electrónico", value=email)
+            new_phone = st.text_input("Teléfono", value=phone)
 
-                if guardar:
-                    client_service.update_client(client_id_edit, new_name, new_email, new_phone)
-                    st.success("Cliente actualizado correctamente.")
+            guardar = st.form_submit_button("Guardar cambios")
+            borrar = st.form_submit_button("Eliminar cliente")
 
-                if borrar:
-                    client_service.delete_client(client_id_edit)
-                    st.warning("Cliente eliminado.")
+            if guardar:
+                client_service.update_client(
+                    client_id,
+                    new_name,
+                    new_email,
+                    new_phone
+                )
+                st.success("Cliente actualizado correctamente.")
+                # recargar datos actualizados
+                st.session_state["client_loaded"] = client_service.get_client_by_id(client_id)
+
+            if borrar:
+                client_service.delete_client(client_id)
+                st.warning("Cliente eliminado.")
+                st.session_state["client_loaded"] = None
+
