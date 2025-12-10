@@ -129,6 +129,19 @@ class Database:
             )
             """
         )
+        # Tabla de veterinarios
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS vets (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                full_name TEXT NOT NULL,
+                specialty TEXT NOT NULL,
+                schedule TEXT NOT NULL,
+                email TEXT,
+                phone TEXT
+            )
+            """
+        )
 
 
         conn.commit()
