@@ -1,53 +1,56 @@
-from datetime import datetime
-from ..db import Database
-from ..models import AppointmentStatus
+from src.db import Database
 
-# Servicio encargado de gestionar las citas veterinarias.
 class AppointmentService:
-    def __init__(self, db: Database) -> None:
-        # Guardamos la instancia de la base de datos para usarla en los métodos.
+    def __init__(self, db: Database):
         self.db = db
 
-    # Crea una nueva cita en la base de datos.
-    def create_appointment(
-        self,
-        pet_id: int,              # ID de la mascota relacionada con la cita.
-        vet_id: int,              # ID del veterinario asignado.
-        scheduled_at: datetime,   # Fecha y hora de la cita.
-        reason: str,              # Motivo de la consulta.
-    ) -> None:
-
-        # Guardamos scheduled_at en formato ISO para facilitar búsquedas por fecha.
+    def create_appointment(self, pet_id: int, vet_id: int, scheduled_at: str, reason: str):
         self.db.execute(
             """
             INSERT INTO appointments (pet_id, vet_id, scheduled_at, reason, status)
-            VALUES (?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, 'PENDING')
             """,
-            (
-                pet_id,
-                vet_id,
-                scheduled_at.isoformat(),
-                reason,
-                AppointmentStatus.PENDING.value,   # Estado inicial: "pending".
-            ),
+            (pet_id, vet_id, scheduled_at, reason),
         )
 
-    # Lista todas las citas de un día concreto.
-    def list_appointments_by_date(self, date_str: str) -> list[tuple]:
-        # Se usa LIKE con "YYYY-MM-DD%" para obtener todas las citas del día.
+    def list_appointments_by_date(self, date_str: str):
         return self.db.query(
             """
             SELECT id, pet_id, vet_id, scheduled_at, reason, status
             FROM appointments
-            WHERE scheduled_at LIKE ?
-            ORDER BY scheduled_at
+            WHERE DATE(scheduled_at) = ?
+            ORDER BY scheduled_at ASC
             """,
-            (f"{date_str}%",),
+            (date_str,),
         )
 
-    # Actualiza el estado de una cita.
-    def update_status(self, appointment_id: int, status: AppointmentStatus) -> None:
+    def get_appointment_by_id(self, appointment_id: int):
+        rows = self.db.query(
+            """
+            SELECT id, pet_id, vet_id, scheduled_at, reason, status
+            FROM appointments
+            WHERE id = ?
+            """,
+            (appointment_id,),
+        )
+        return rows[0] if rows else None
+
+    def update_appointment(self, appointment_id: int, new_datetime: str, new_reason: str):
         self.db.execute(
-            "UPDATE appointments SET status = ? WHERE id = ?",
-            (status.value, appointment_id),   # status.value = string del Enum.
+            """
+            UPDATE appointments
+            SET scheduled_at = ?, reason = ?
+            WHERE id = ?
+            """,
+            (new_datetime, new_reason, appointment_id),
+        )
+
+    def update_status(self, appointment_id: int, new_status: str):
+        self.db.execute(
+            """
+            UPDATE appointments
+            SET status = ?
+            WHERE id = ?
+            """,
+            (new_status, appointment_id),
         )
