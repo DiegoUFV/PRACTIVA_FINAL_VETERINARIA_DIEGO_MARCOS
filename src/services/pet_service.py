@@ -32,3 +32,14 @@ class PetService:
 
     def delete_pet(self, pet_id: int):
         self.db.execute("DELETE FROM pets WHERE id = ?", (pet_id,))
+
+        
+    def list_pets_by_client(self, client_id: int) -> list[tuple]:
+        return self.db.query(
+            """
+            SELECT id, name, species, breed, sex
+            FROM pets
+            WHERE owner_id = ?
+            """,
+            (client_id,),
+        )
