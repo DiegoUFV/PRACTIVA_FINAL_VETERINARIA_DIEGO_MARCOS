@@ -83,21 +83,32 @@ with tabs[2]:
         if not pet:
             st.error("Mascota no encontrada.")
         else:
-            name_edit = st.text_input("Nombre", value=pet[2])
-            species_edit = st.text_input("Especie", value=pet[3])
-            breed_edit = st.text_input("Raza", value=pet[4])
-            sex_edit = st.selectbox("Sexo", ["Macho", "Hembra"], index=0 if pet[5] == "Macho" else 1)
+            st.success("Mascota cargada")
 
-            if st.button("Guardar cambios"):
-                pet_service.update_pet(
-                    pet_id_edit,
-                    name_edit,
-                    species_edit,
-                    breed_edit,
-                    sex_edit
+            # USAMOS FORMULARIO PARA EVITAR RESETEOS
+            with st.form("editar_mascota_form"):
+                name_edit = st.text_input("Nombre", value=pet[2])
+                species_edit = st.text_input("Especie", value=pet[3])
+                breed_edit = st.text_input("Raza", value=pet[4])
+                sex_edit = st.selectbox(
+                    "Sexo", 
+                    ["Macho", "Hembra"], 
+                    index=0 if pet[5] == "Macho" else 1
                 )
-                st.success("Mascota actualizada.")
 
-            if st.button("Eliminar mascota"):
-                pet_service.delete_pet(pet_id_edit)
-                st.warning("Mascota eliminada.")
+                guardar = st.form_submit_button("Guardar cambios")
+                borrar = st.form_submit_button("Eliminar mascota")
+
+                if guardar:
+                    pet_service.update_pet(
+                        pet_id_edit,
+                        name_edit,
+                        species_edit,
+                        breed_edit,
+                        sex_edit
+                    )
+                    st.success("Mascota actualizada correctamente.")
+
+                if borrar:
+                    pet_service.delete_pet(pet_id_edit)
+                    st.warning("Mascota eliminada.")
